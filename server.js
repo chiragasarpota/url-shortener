@@ -125,6 +125,31 @@ app.put("/api/update", validateApiKey, async (req, res) => {
   }
 });
 
+app.delete("/api/delete", validateApiKey, async (req, res) => {
+  try {
+    const { key } = req.body;
+    if (!key) {
+      return res.status(400).send("Missing key");
+    }
+
+    // Check if key is alphanumeric
+    if (!/^[a-z0-9]+$/i.test(key)) {
+      return res.status(400).send("Key must be alphanumeric");
+    }
+
+    const exists = await redisClient.exists(key);
+    if (!exists) {
+      return res.status(404).send("Key does not exist");
+    }
+
+    await redisClient.del(key);
+    res.status(200).send("Key-Value pair deleted");
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Server error");
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
